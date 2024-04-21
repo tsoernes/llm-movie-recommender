@@ -1,3 +1,6 @@
+# Data files
+
+*.parquet
 # Avoid exposing API key
 config.py
 
