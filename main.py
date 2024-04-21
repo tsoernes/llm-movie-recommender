@@ -1,26 +1,20 @@
 from config import TMDB_API_KEY
-from config import TMDB_API_KEY
 import requests
-import pandas as pd
+import polars as pl
 import numpy as np
 from bs4 import BeautifulSoup
-from config import TMDB_API_KEY
+from tmdbv3api import TMDb, Discover, Genre
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-}
+tmdb = TMDb()
+tmdb.api_key = TMDB_API_KEY
+discover = Discover()
+movies = discover.discover_movies({
+    'sort_by': 'vote_average.desc',
+    'vote_count.gte': 10_000,
+})
 
-min_votes = 10000
-base_url = f"https://www.imdb.com/search/title/?title_type=feature&num_votes={min_votes},&sort=user_rating,desc&"
+id_and_genre = Genre().movie_list()['genres']
+id_to_genre = {x['id']: x['name'] for x in id_and_genre}
 
-html_elements_list = []
-n_movies = 100
-for i in range(0, n_movies, 50):
-    url = base_url + f"start={i}&ref_=adv_nxt"
-    html_file = requests.get(url, headers=headers)
-    html_beautiful_file = BeautifulSoup(html_file.content, "html.parser")
-    html_elements_list.extend(
-        html_beautiful_file.find_all(
-            "div", attrs={"class": "lister-item mode-advanced"}
-        )
-    )
+df = pl.from_dicts([dict(movie) for movie in movies])
+df = df[['id', 'title', 'overview', 'genre_ids']]
