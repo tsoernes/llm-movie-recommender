@@ -6,31 +6,49 @@ from pathlib import Path
 movies_path = Path().absolute() / "movies.parquet"
 
 
-def fetch_movies() -> pl.DataFrame:
+def fetch_movies(min_votes: int = 1_000) -> pl.DataFrame:
     """
-    Fetch movies from themoviedb and return them in a DataFrame
+    Fetch top rated movies from themoviedb and return them in a DataFrame
+
+    Parameters
+    ----------
+    min_votes
+        Only fetch movies that have this number of votes or more
+
+    Returns
+    -------
+    polars.DataFrame
     """
     # Set the API endpoint and parameters
-    url = "https://api.themoviedb.org/3/discover/movie"
-    params = {
-        "api_key": TMDB_API_KEY,
-        "sort_by": "vote_average.desc",
-        "vote_count.gte": 10_000,
-        "page": 1,
-    }
+    base_url = "https://api.themoviedb.org/3"
+    url = base_url + "/discover/movie"
 
-    # Send a GET request to the API
-    response = requests.get(url, params=params)
-    response.raise_for_status()
+    movies = []
+    i = 1
+    while True:
+        params = {
+            "api_key": TMDB_API_KEY,
+            "sort_by": "vote_average.desc",
+            "vote_count.gte": min_votes,
+            "page": i,
+        }
 
-    # Extract the movie data from the response
-    movies = response.json()["results"]
+        # Send a GET request to the API
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+
+        # Extract the movie data from the response
+        movies_ = response.json()["results"]
+        if not movies_:
+            break
+        movies.extend(movies_)
+        i += 1
 
     # Create a Polars DataFrame from the movie data
     df = pl.DataFrame(movies)
 
     # Fetch genre names
-    url = "https://api.themoviedb.org/3/genre/movie/list"
+    url = base_url + "/genre/movie/list"
     params = {"api_key": TMDB_API_KEY}
     response = requests.get(url, params=params)
     response.raise_for_status()
@@ -51,9 +69,11 @@ def fetch_movies() -> pl.DataFrame:
 
 
 def main():
-    # Fetch movies from TMDb if they are not stored on disk
+    # Fetch movies from themoviedb if they are not stored on disk
     if movies_path.exists():
         df = pl.read_parquet(movies_path)
+        print(f"Read {len(df)} movies")
     else:
         df = fetch_movies()
         df.write_parquet(movies_path)
+        print(f"Fetched {len(df)} movies")
