@@ -189,6 +189,33 @@ def main():
         df = pl.read_parquet(movies_path)
         print(f"Read {len(df)} movies")
     else:
-        df = fetch_movies()
+        movies = fetch_top_rated_movies()
+        df = prep_movies(movies)
         df.write_parquet(movies_path)
         print(f"Fetched {len(df)} movies")
+
+    client = chromadb.PersistentClient(path=str(db_path))
+    # Here you can add a custom embedding function (e.g.OpenAI)
+    # using the embedding_function argument. The default is a all-MiniLM-L6-v2
+    # Sentence Transformer.
+    collection = client.get_or_create_collection("movies")
+
+    print(
+        "Adding movies to database. This will download a language model on first initialization"
+    )
+    # Add docs to the collection.
+    collection.add(
+        documents=df[
+            "text"
+        ].to_list(),  # chromadb handles tokenization, embedding, and indexing automatically.
+        ids=df["id"].cast(str).to_list(),
+        # metadatas=df[["col1", "col2"]].to_dicts(), # filter on these!
+    )
+
+    # Query/search 2 most similar results. You can also .get by id
+    results = collection.query(
+        query_texts=["This is a query document"],
+        n_results=2,
+        # where={"metadata_field": "is_equal_to_this"}, # optional filter
+        # where_document={"$contains":"search_string"}  # optional filter
+    )
