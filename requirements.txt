@@ -1,0 +1,7 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: linux-64
+chromadb=0.4.24=py312h7900ff3_0
+polars=0.20.21=py312h21dbfff_1
+python=3.12.3=hab00c5b_0_cpython
+requests=2.31.0=pyhd8ed1ab_0
