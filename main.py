@@ -151,13 +151,16 @@ def prep_movies(movies: list[dict]) -> pl.DataFrame:
     return df
 
 
-def select_query_movie(query: str, autoselect_first: bool = False) -> pl.DataFrame:
+def select_query_movie(
+    query: str, autoselect_first: bool = False
+) -> pl.DataFrame | None:
     """
     Query for movie. Select
     """
     movies = search_movie(query)
-    # if  not movies:
-    #     print(f"Did not find any movies for {query=}. Try again.")
+    if not movies:
+        print(f"Did not find any movies for {query=}. Try again.")
+        return
     df = prep_movies(movies)
     print_movies_s = (
         pl.Series(range(len(df))).cast(str)
@@ -168,17 +171,20 @@ def select_query_movie(query: str, autoselect_first: bool = False) -> pl.DataFra
         + "): "
         + df["overview"]
     )
-    print("Select from the following movies:")
-    print(print_movies_s.str.concat('\n')[0])
-    ix = 0
-    first_inp = True
-    while first_inp or ix not in range(len(df)):
-        first_inp = False
-        try:
-            ix = input(f"Select movie (0-{len(df)}): ")
-            ix = int(ix)
-        except ValueError:
-            pass
+    if autoselect_first:
+        ix = 0
+    else:
+        print("Select from the following movies:")
+        print(print_movies_s.str.concat("\n")[0])
+        ix = 0
+        first_inp = True
+        while first_inp or ix not in range(len(df)):
+            first_inp = False
+            try:
+                ix = input(f"Select movie (0-{len(df)}): ")
+                ix = int(ix)
+            except ValueError:
+                pass
     df = df[int(ix), :]
     return df
 
@@ -200,22 +206,33 @@ def main():
     # Sentence Transformer.
     collection = client.get_or_create_collection("movies")
 
-    print(
-        "Adding movies to database. This will download a language model on first initialization"
-    )
-    # Add docs to the collection.
-    collection.add(
-        documents=df[
-            "text"
-        ].to_list(),  # chromadb handles tokenization, embedding, and indexing automatically.
-        ids=df["id"].cast(str).to_list(),
-        # metadatas=df[["col1", "col2"]].to_dicts(), # filter on these!
-    )
+    if not collection.count():
+        print(
+            "Adding movies to database. This will download a language model on first initialization"
+        )
+        # Add docs to the collection.
+        # chromadb handles tokenization, embedding, and indexing automatically.
+        collection.add(
+            documents=df["text"].to_list(),
+            ids=df["id"].cast(str).to_list(),
+            # metadatas=df[["col1", "col2"]].to_dicts(), # filter on these!
+        )
 
-    # Query/search 2 most similar results. You can also .get by id
+    query_df = None
+    while query_df is None:
+        query = input("Query for a movie: ")
+        query_df = select_query_movie(query)
+
+    # Query/search
     results = collection.query(
-        query_texts=["This is a query document"],
-        n_results=2,
+        query_texts=query_df["text"].to_list(),
+        n_results=10,
         # where={"metadata_field": "is_equal_to_this"}, # optional filter
         # where_document={"$contains":"search_string"}  # optional filter
     )
+    if docs := results["documents"]:
+        print(*(x for x in docs[0]), sep="\n\n")
+
+
+if __name__ == "main":
+    main()

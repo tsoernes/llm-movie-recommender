@@ -1,5 +1,5 @@
 # Data files
-
+*.chromadb
 *.parquet
 # Avoid exposing API key
 config.py
