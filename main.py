@@ -155,7 +155,11 @@ def select_query_movie(
     query: str, autoselect_first: bool = False
 ) -> pl.DataFrame | None:
     """
-    Query for movie. Select
+    Query for movie.
+
+    Given a movie title query, fetch candidates from TMDB and ask the user
+    to select the most relevant result. If `autoselect_first`, then auto select
+    the first candidate result.
     """
     movies = search_movie(query)
     if not movies:
@@ -227,8 +231,6 @@ def main():
     results = collection.query(
         query_texts=query_df["text"].to_list(),
         n_results=10,
-        # where={"metadata_field": "is_equal_to_this"}, # optional filter
-        # where_document={"$contains":"search_string"}  # optional filter
     )
     if docs := results["documents"]:
         print(*(x for x in docs[0]), sep="\n\n")
