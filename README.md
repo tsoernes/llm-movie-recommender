@@ -1,4 +1,3 @@
 # llm-movie-recommender
 
-A cold start movie recommender using LLM embeddings on movie information
-to retriev similar movies based on vector distance.
+Proof of concept, cold start movie recommender. Uses a Language Model to generate embeddings from movie summaries and genres, and find similar movies using a vector database.
