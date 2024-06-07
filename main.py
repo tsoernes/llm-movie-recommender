@@ -236,5 +236,5 @@ def main():
         print(*(x for x in docs[0]), sep="\n\n")
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     main()
