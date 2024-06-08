@@ -137,17 +137,24 @@ def prep_movies(movies: list[dict]) -> pl.DataFrame:
     text = (
         "Movie title: "
         + df["title"]
-        + "\nYear: "
+        + ".\nYear: "
         + df["year"]
-        + "\nOverview: "
+        + ".\nOverview: "
         + df["overview"]
         + "\nGenres: "
         + df["genres"].list.join(", ")
+        + "."
     )
     df = df.with_columns(text.alias("text"))
 
     # Drop unecessary columns
     df = df[["id", "title", "year", "overview", "genres", "text"]]
+
+    # The API may sometimes yield duplicates. Keep only unique rows
+    df = df.unique(subset="id", maintain_order=True)
+
+    # The vector database expects IDs in string format
+    df = df.with_columns(df["id"].cast(str))
     return df
 
 
