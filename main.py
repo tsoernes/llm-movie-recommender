@@ -10,9 +10,9 @@ db_path = Path().absolute() / "movies.chromadb"
 tmdb_url = "https://api.themoviedb.org/3"
 
 
-def fetch_top_rated_movies(min_votes: int = 1_000) -> list[dict]:
+def fetch_popular_movies(min_votes: int = 1_000) -> list[dict]:
     """
-    Fetch top rated movies from themoviedb
+    Fetch most popular movies from themoviedb (TMDb)
 
     Parameters
     ----------
@@ -206,7 +206,7 @@ def main():
         df = pl.read_parquet(movies_path)
         print(f"Read {len(df)} movies")
     else:
-        movies = fetch_top_rated_movies()
+        movies = fetch_popular_movies()
         df = prep_movies(movies)
         df.write_parquet(movies_path)
         print(f"Fetched {len(df)} movies")
@@ -225,7 +225,7 @@ def main():
         # chromadb handles tokenization, embedding, and indexing automatically.
         collection.add(
             documents=df["text"].to_list(),
-            ids=df["id"].cast(str).to_list(),
+            ids=df["id"].to_list(),
             # metadatas=df[["col1", "col2"]].to_dicts(), # filter on these!
         )
 
