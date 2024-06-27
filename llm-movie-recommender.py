@@ -32,9 +32,7 @@
 # Denne anbefalingsalgoritmen ligner på clustering. Datasettet består av unlabelled data - informasjon om filmer, uten informasjon
 # om hvilke filmer som er like eller hvilke brukere som like hvilke filmer. Algoritmen gir informasjon om hvor like filmer er hverandre,
 # og kan dermed brukes til å gi anbefalinger. For eksempel kan vi forvente (håpe) på at filmer som handler å reise i tid ved hjelp av tidsmaskiner
-# ligger nær hverandre - det vil si at cluster-algoritmen mener disse filmene har en likhet med hverandre.
-
-# %%
+# ligger nær hverandre - det vil si at algoritmen mener disse filmene har en likhet med hverandre.
 
 # %% [markdown]
 # La oss først begynne med å hente filmdata fra den åpne filmdatabasen TMDb ved å bruke API-et.
